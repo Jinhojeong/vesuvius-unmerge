@@ -1,0 +1,18 @@
+[project]
+name = "unmerge-cli"
+version = "0.1.0"
+description = "Vesuvius Challenge: flag or split <4vox merged papyrus sheet contacts (ray-order seeds + anisotropic random walk, tau-gated)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy", "scikit-image", "tifffile"]
+
+[project.scripts]
+unmerge = "unmerge_cli.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
