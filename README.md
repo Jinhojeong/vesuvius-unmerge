@@ -57,7 +57,7 @@ If the solver is uncertain, it will not guess. Instead, it emits a standardized 
 
 ## 3. Khartes Import Steps
 
-`unmerge-cli` utilizes a native 3D QC Exporter (`sheet-qc-export`), which outputs standard Wavefront `.obj` files in global volume coordinates.
+All outputs are standard Wavefront `.obj` files in global volume coordinates.
 
 To load the outputs:
 
