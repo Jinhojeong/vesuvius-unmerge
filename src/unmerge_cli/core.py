@@ -2,8 +2,9 @@
 
 Validation (Dataset059, 2026-07): relative-order identity 92.1% over 40
 sites / 144 rays; in the packaged tool, 25% auto-split at 98.4% observed
-ray accuracy on GT-quality masks, and all 19 true-weld sites on raw model
-predictions refused with zero false splits. See README."""
+ray accuracy on GT-quality masks. On raw model predictions (Kaggle
+competition holdout, not Dataset059) every true-weld site was refused with
+zero false splits, 12 sites. See README."""
 import numpy as np
 from scipy import ndimage as ndi
 from scipy.sparse import coo_matrix

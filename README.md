@@ -31,7 +31,7 @@ unmerge --volume mask.tif --candidates points.json --out out/
 
 Outputs are Wavefront `.obj` in global volume coordinates: `Sheet_A_*.obj` and
 `Sheet_B_*.obj` when the split is accepted, or a marker (`WELD_FLAG_*.obj`,
-`DISCONNECTED_FLAG_*.obj`) naming why it was not. `report.json` carries the
+`DISCONNECTED_GRAPH_FLAG_*.obj`) naming why it was not. `report.json` carries the
 decision and confidence margin per site.
 
 ## What it does on real data
@@ -84,8 +84,9 @@ For every processed site, the CLI will output `.obj` files to the output directo
 If the solver is uncertain, it will not guess. Instead, it emits a standardized 3D octahedron marker at the input point with a specific semantic name:
 
 - `WELD_FLAG_LOW_MARGIN.obj`: The solver successfully ran, but the confidence margin ($\Delta \Phi < 0.10$) was too low. The identities of the two sheets are too blended at this location.
-- `WELD_FLAG_STARVED_PERIPHERY.obj`: The $64^3$ crop is so severely compressed that the outer periphery did not yield $\ge 2$ distinct ray-order seeds. The local geometry is completely merged.
+- `WELD_FLAG_STARVED_PERIPHERY.obj`: Fewer than 5 rays in the seed ring crossed two distinct sheet runs, which is the minimum the solve seeds from (`MIN_SEED_RAYS` in `core.py`, reported per site as `n_seed_rays`). Too little of the periphery separates into two sheets to anchor the solve.
 - `WELD_FLAG_NO_EVAL_RAYS.obj`: Seeds were found, but the core contact bridge lacks valid internal evaluation rays to measure the margin.
+- `WELD_FLAG_SOLVE_FAILED.obj`: The linear solve did not return a usable potential field at all, so no margin could be read.
 - `DISCONNECTED_GRAPH_FLAG.obj`: The internal topological graph is shattered (e.g., thin shell fragmentation). The Conjugate Gradient solver returned `NaN`. 
 
 **Action for all Flags**: The 3D marker tells the annotator exactly where the algorithm gave up. Load the flag into Khartes, navigate to the marker, and **manually trace the topological continuity from outside the crop**.
@@ -113,8 +114,11 @@ To load the outputs:
 - GT-quality masks (annotation-workflow case), 8 volumes / 65 merged sites:
   25% auto-split, 98.4% observed ray accuracy (61/62) at accepted sites,
   75% honestly flagged.
-- Raw model predictions (ft_full holdout): all 19/19 true-weld sites were
-  refused (flagged), zero false splits. Model probabilities carry no weld
+- Raw model predictions (ft_full on the Kaggle competition holdout volumes,
+  not Dataset059): every true-weld site the tool was pointed at came back
+  refused (flagged), with zero false splits. This was two passes over the same
+  volumes, 7 sites under naive seeding and 12 under strong-threshold seeding,
+  so read it as 12 sites rather than 19. Model probabilities carry no weld
   boundary information (0.67-1.0 across the weld), so on predictions the
   tool is a weld flagger by design, not a splitter.
 - Background and the full diagnostic chain: https://github.com/Jinhojeong/vesuvius-surface-geometry-diagnostic
