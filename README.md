@@ -1,17 +1,54 @@
-# `unmerge-cli v0`
+# unmerge-cli
 
-A standalone, topology-aware CLI tool for the Vesuvius Challenge to resolve heavily compressed, sub-voxel merged papyrus sheets (`<4 voxels` apart).
+Splits fused papyrus sheet instances in compressed regions of Herculaneum scroll
+data, where two sheets sit under 4 voxels apart and every segmentation model
+labels them as one.
 
-Where two sheets are in physical contact there is no CT intensity boundary
-between them, so no intensity-based model can separate them. This tool does
-what annotators do instead: it carries sheet identity in from the resolved
-periphery. Seeds come from ray-order at points where the two sheets are
-still distinguishable, and an anisotropic random-walk solve propagates that
-identity through the contact zone.
+![Five fused sheet-instance splits](docs/split_examples.png)
 
-When a region cannot be resolved this way, the tool does not guess. It
-writes a 3D marker flag at the point instead, so the annotator knows exactly
-where manual tracing is needed.
+Top row: a fused instance (yellow) with the flag point marked. Bottom row: the
+two instances its voxels were split between. From the PHerc1218 run below.
+
+Where two sheets are in physical contact the CT carries no intensity boundary
+between them, so no intensity-based method can separate them at any threshold or
+scale ([measured here](https://github.com/Jinhojeong/vesuvius-surface-geometry-diagnostic)).
+This tool does what annotators do instead: it carries sheet identity in from the
+surroundings where the sheets are still resolved, using an anisotropic
+random-walk solve whose conductance is suppressed across the contact. When a
+site cannot be resolved that way it is flagged rather than guessed.
+
+## Install and run
+
+```bash
+pip install git+https://github.com/Jinhojeong/vesuvius-unmerge
+
+# one contact point, Khartes X Y Z order
+unmerge --volume mask.tif --click 2450 1320 890 --out out/
+
+# a batch of candidates
+unmerge --volume mask.tif --candidates points.json --out out/
+```
+
+Outputs are Wavefront `.obj` in global volume coordinates: `Sheet_A_*.obj` and
+`Sheet_B_*.obj` when the split is accepted, or a marker (`WELD_FLAG_*.obj`,
+`DISCONNECTED_FLAG_*.obj`) naming why it was not. `report.json` carries the
+decision and confidence margin per site.
+
+## What it does on real data
+
+Applied to the published 686k-instance PHerc1218 sheet-instance labels, it
+repaired 14,131 fused sites across 1,369 tiles and reassigned 48.6M voxels; a
+ray recast at every site confirms 78.8% of the conservative tier now cross two
+instances at the weld where they crossed one before. The result is published as
+[pherc1218-topological-repair](https://www.kaggle.com/datasets/jhjeong0815/pherc1218-topological-repair)
+and listed as a companion dataset by
+[vesuvius-sheet-tools](https://github.com/IyanDopico/vesuvius-sheet-tools).
+
+One scope note worth reading before use: the method seeds from neighbouring
+instance labels, so it refines a segmentation that already has label
+granularity. On raw coarse predictions it moves the fused share by about a
+point, against 16.7 for an intensity-based splitter on the same crop. It is a
+refiner, not a bootstrap.
 
 ---
 
